@@ -1,9 +1,10 @@
+import numpy as np
 from numpy import ravel
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, precision_score, accuracy_score
 
 def prepareForModelUse(populatedDataframe: DataFrame):
     
@@ -33,11 +34,35 @@ def prepareForModelUse(populatedDataframe: DataFrame):
     scaler.fit(X_train)
     X_train = scaler.transform(X_train)
     X_test = scaler.transform(X_test)
-    
     return X_train, X_test, y_train, y_test
 
-def useModel(trainDF_Y, trainDF_X, testDF_Y, testDF_X, model: RandomForestClassifier):
+def useModel(trainDF_Y, trainDF_X, y_test, testDF_X, model: RandomForestClassifier):
     model.fit(trainDF_X, trainDF_Y.values.ravel())
     prediction = model.predict(testDF_X)
-    confusionMatrix = confusion_matrix(testDF_Y, prediction)
-    return confusionMatrix
+    confusionMatrix = confusion_matrix(y_test, prediction)
+    return confusionMatrix, prediction
+
+def calculateStatisticalData(confusionMatrix: confusion_matrix, y_test, prediction):
+    truePositive = np.diag(confusionMatrix)
+    falsePositive = confusionMatrix.sum(axis=0) - np.diag(confusionMatrix)
+    falseNegative = confusionMatrix.sum(axis=1) - np.diag(confusionMatrix)
+    trueNegative = confusionMatrix.sum() - (falsePositive + falseNegative + truePositive)
+    precision = precision_score(y_test, prediction, average = 'weighted') * 100
+    recall = truePositive / (truePositive + falseNegative) * 100
+    falsePositiveRate = falsePositive / (falsePositive + trueNegative) * 100
+    trueNegativeRate = trueNegative / (trueNegative + falsePositive) * 100
+    accuracy = accuracy_score(y_test, prediction) * 100
+    fMeassure = 2 * ((precision * recall) / (precision + recall))
+    
+    statisticalData = dict()
+    statisticalData['truePositive'] = truePositive
+    statisticalData['falsePositive'] = falsePositive
+    statisticalData['falseNegative'] = falseNegative
+    statisticalData['trueNegative'] = trueNegative
+    statisticalData['precision'] = precision
+    statisticalData['recall'] = recall
+    statisticalData['falsePositiveRate'] = falsePositiveRate
+    statisticalData['trueNegativeRate'] = trueNegativeRate
+    statisticalData['accuracy'] = accuracy
+    statisticalData['fMeassure'] = fMeassure
+    return statisticalData

@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.metrics import confusion_matrix, precision_score, accuracy_score
 from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
-from functions import prepareForModelUse, useModel
+from functions import prepareForModelUse, useModel, calculateStatisticalData
 
 # 2. Dohvat i priprena skupa podataka #
 
@@ -32,4 +32,10 @@ X_train, X_test, y_train, y_test = prepareForModelUse(datasetDF)
 modelRF = RandomForestClassifier(n_estimators = 30)
 
 # Koristenje napravljene metode za rad nad modelom strojnog ucenja
-confusionMatrix = useModel(y_train, X_train, y_test, X_test, modelRF)
+confusionMatrix, prediction = useModel(y_train, X_train, y_test, X_test, modelRF)
+
+# 5. Izracun statistickih pokazatelja modela strojnog ucenja #
+
+# TODO Opis
+statisticalData = calculateStatisticalData(confusionMatrix, y_test, prediction)
+print(statisticalData)
