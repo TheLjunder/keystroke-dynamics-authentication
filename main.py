@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.metrics import confusion_matrix, precision_score, accuracy_score
 from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
-from functions import prepareForModelUse
+from functions import prepareForModelUse, useModel
 
 # 2. Dohvat i priprena skupa podataka #
 
@@ -21,8 +21,15 @@ datasetFilePath = Path.joinpath(currentPath, "DSL-StrongPasswordData.csv")
 datasetDF = pd.read_csv(datasetFilePath)
 
 # 3. Priprema skupa podataka #
+
+# Koristenje napravljene metode za pripremu skupa podataka 
+# za unos u model strojng ucenja
 X_train, X_test, y_train, y_test = prepareForModelUse(datasetDF)
- 
-model = RandomForestClassifier().fit(X_train,y_train)
-y_pred = model.predict(X_test)
-print(y_pred)
+
+# 4. Unos skupa podataka u model strojnog ucenja #
+
+# Inicijalizacija modela strojnog ucenja
+modelRF = RandomForestClassifier(n_estimators = 30)
+
+# Koristenje napravljene metode za rad nad modelom strojnog ucenja
+confusionMatrix = useModel(y_train, X_train, y_test, X_test, modelRF)

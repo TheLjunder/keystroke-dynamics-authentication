@@ -1,6 +1,9 @@
+from numpy import ravel
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import confusion_matrix
 
 def prepareForModelUse(populatedDataframe: DataFrame):
     
@@ -23,30 +26,18 @@ def prepareForModelUse(populatedDataframe: DataFrame):
     # strojnog ucenja i skupove za testiranje modela strojnog ucenja
     X_train, X_test, y_train, y_test = train_test_split(
     X, Y, random_state=104,test_size=0.25, shuffle=True)
-    
-    print('X_train : ')
-    print(X_train.head())
-    print(X_train.shape)
-    
-    print('')
-    print('X_test : ')
-    print(X_test.head())
-    print(X_test.shape)
-    
-    print('')
-    print('y_train : ')
-    print(y_train.head())
-    print(y_train.shape)
-    
-    print('')
-    print('y_test : ')
-    print(y_test.head())
-    print(y_test.shape)
 
-    # Normaliziraj skupove podataka X
+    # Normaliziranje skupova podataka kako bi predvidanje modela 
+    # bilo sto preciznije
     scaler = StandardScaler()
     scaler.fit(X_train)
     X_train = scaler.transform(X_train)
     X_test = scaler.transform(X_test)
     
     return X_train, X_test, y_train, y_test
+
+def useModel(trainDF_Y, trainDF_X, testDF_Y, testDF_X, model: RandomForestClassifier):
+    model.fit(trainDF_X, trainDF_Y.values.ravel())
+    prediction = model.predict(testDF_X)
+    confusionMatrix = confusion_matrix(testDF_Y, prediction)
+    return confusionMatrix
