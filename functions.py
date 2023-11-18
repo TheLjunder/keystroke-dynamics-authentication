@@ -1,10 +1,12 @@
 import numpy as np
 from numpy import ravel
+import pandas as pd
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix, precision_score, accuracy_score
+import matplotlib.pyplot as plt
 
 def prepareForModelUse(populatedDataframe: DataFrame):
     
@@ -66,3 +68,48 @@ def calculateStatisticalData(confusionMatrix: confusion_matrix, y_test, predicti
     statisticalData['accuracy'] = accuracy
     statisticalData['fMeassure'] = fMeassure
     return statisticalData
+
+def plotStatisticalData(statisticalData: dict, index):
+    # # Preciznost
+    # precisonValuesDF = pd.DataFrame(list(statisticalData.get("precision")), index = ['Vrijednosti pokazatelja'])
+    # precisonValuesDF.plot(kind = 'bar')
+    # plt.xticks(rotation=0)
+    # plt.title('Preciznost pojedinog modela')
+    # plt.legend(bbox_to_anchor=(1.02, 0.1), loc='upper left', borderaxespad=0)
+    # plt.savefig('precision.png',bbox_inches='tight')
+    # Opoziv
+    recallValuesDF = pd.DataFrame(list(statisticalData.get("recall")), index = index)
+    recallValuesDF.plot(kind = 'bar')
+    plt.xticks(rotation=90)
+    plt.title('Opoziv po kategorijama')
+    plt.legend().remove()
+    plt.savefig('recall.png',bbox_inches='tight')
+    # FPR
+    falsePositiveValuesDF = pd.DataFrame(statisticalData.get("falsePositiveRate"), index = index)
+    falsePositiveValuesDF.plot(kind = 'bar')
+    plt.xticks(rotation=90)
+    plt.title('Stopa pogrešnih klasifikacija po subjektima')
+    plt.legend().remove()
+    plt.savefig('fpr.png',bbox_inches='tight')
+    # TNR
+    trueNegativeValuesDF = pd.DataFrame(statisticalData.get("trueNegativeRate"), index = index)
+    trueNegativeValuesDF.plot(kind = 'bar')
+    plt.xticks(rotation=90)
+    plt.title('Stopa točnih klasifikacija normalnih zapisa po subjektima')
+    plt.legend().remove()
+    plt.savefig('tnr.png',bbox_inches='tight')
+    # # Točnost
+    # accuracyValuesDF = pd.DataFrame(statisticalData.get("accuracy"), index = ['Vrijednosti pokazatelja'])
+    # accuracyValuesDF.plot(kind = 'bar')
+    # plt.xticks(rotation=0)
+    # plt.title('Točnost modela')
+    # plt.legend(bbox_to_anchor=(1.02, 0.1), loc='upper left', borderaxespad=0)
+    # plt.savefig('accuracy.png',bbox_inches='tight')
+    # F-mjera
+    fMeassureValuesDF = pd.DataFrame(statisticalData.get("fMeassure"), index = index)
+    fMeassureValuesDF.plot(kind = 'bar')
+    plt.xticks(rotation=90)
+    plt.title('F-mjera modela po subjektima')
+    plt.legend().remove()
+    plt.savefig('fMeassure.png',bbox_inches='tight')
+    return

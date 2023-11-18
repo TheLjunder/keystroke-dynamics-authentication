@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.metrics import confusion_matrix, precision_score, accuracy_score
 from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
-from functions import prepareForModelUse, useModel, calculateStatisticalData
+from functions import prepareForModelUse, useModel, calculateStatisticalData, plotStatisticalData
 
 # 2. Dohvat i priprena skupa podataka #
 
@@ -19,6 +19,11 @@ datasetFilePath = Path.joinpath(currentPath, "DSL-StrongPasswordData.csv")
 
 # Spremanje skupa podataka u "Dataframe"
 datasetDF = pd.read_csv(datasetFilePath)
+
+# Spremanje liste subjekata za kasnije koristenje s 
+# statistickim podacima
+subjectsListDF = datasetDF['subject'].value_counts()
+index = subjectsListDF.index.tolist()
 
 # 3. Priprema skupa podataka #
 
@@ -36,6 +41,8 @@ confusionMatrix, prediction = useModel(y_train, X_train, y_test, X_test, modelRF
 
 # 5. Izracun statistickih pokazatelja modela strojnog ucenja #
 
-# TODO Opis
+# TODO Opis metode za izracun statistike
 statisticalData = calculateStatisticalData(confusionMatrix, y_test, prediction)
-print(statisticalData)
+
+# TODO Opis metode za crtanje
+plotStatisticalData(statisticalData, index)
