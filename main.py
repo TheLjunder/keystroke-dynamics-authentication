@@ -22,14 +22,18 @@ datasetDF = pd.read_csv(datasetFilePath)
 
 # Spremanje liste subjekata za kasnije koristenje s 
 # statistickim podacima
-subjectsListDF = datasetDF['subject'].value_counts()
-index = subjectsListDF.index.tolist()
+index = datasetDF['subject'].unique()
+print(index)
 
 # 3. Priprema skupa podataka #
 
 # Koristenje napravljene metode za pripremu skupa podataka 
 # za unos u model strojng ucenja
-X_train, X_test, y_train, y_test = prepareForModelUse(datasetDF)
+X_train, X_test, Y_train, Y_test = prepareForModelUse(datasetDF)
+print(X_train)
+print(X_test)
+print(Y_train)
+print(Y_test)
 
 # 4. Unos skupa podataka u model strojnog ucenja #
 
@@ -37,12 +41,12 @@ X_train, X_test, y_train, y_test = prepareForModelUse(datasetDF)
 modelRF = RandomForestClassifier(n_estimators = 30)
 
 # Koristenje napravljene metode za rad nad modelom strojnog ucenja
-confusionMatrix, prediction = useModel(y_train, X_train, y_test, X_test, modelRF)
+confusionMatrix, prediction = useModel(Y_train, X_train, Y_test, X_test, modelRF)
 
 # 5. Izracun statistickih pokazatelja modela strojnog ucenja #
 
 # TODO Opis metode za izracun statistike
-statisticalData = calculateStatisticalData(confusionMatrix, y_test, prediction)
+statisticalData = calculateStatisticalData(confusionMatrix, Y_test, prediction)
 
 # TODO Opis metode za crtanje
 plotStatisticalData(statisticalData, index)

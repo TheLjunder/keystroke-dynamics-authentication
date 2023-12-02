@@ -8,43 +8,85 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix, precision_score, accuracy_score
 import matplotlib.pyplot as plt
 
-def prepareForModelUse(populatedDataframe: DataFrame):
+def prepareForModelUse(populatedDataFrame: DataFrame):
     
     # Uklanjanje nepotrebnih svojstava skupa podataka
-    populatedDataframe.drop('sessionIndex', axis = 1, inplace = True)
-    populatedDataframe.drop('rep', axis = 1, inplace = True)
+    populatedDataFrame.drop('sessionIndex', axis = 1, inplace = True)
+    populatedDataFrame.drop('rep', axis = 1, inplace = True)
 
     # Razdvajanje skupa podataka na 2 cjeline. Y oznacava skup podataka
     # koji sadrzi korisnike dok je X skup podataka kojega model strojnog
     # ucenja treba razvrstati (prepoznati) prema skupu X
-    X = populatedDataframe[['H.period', 'DD.period.t', 
-    'UD.period.t', 'H.t', 'DD.t.i', 'UD.t.i', 'H.i', 'DD.i.e', 
-    'UD.i.e', 'H.e', 'DD.e.five', 'UD.e.five', 'H.five', 'DD.five.Shift.r', 
-    'UD.five.Shift.r', 'H.Shift.r', 'DD.Shift.r.o', 'UD.Shift.r.o', 'H.o',
-    'DD.o.a', 'UD.o.a', 'H.a', 'DD.a.n', 'UD.a.n', 'H.n', 'DD.n.l', 'UD.n.l',
-    'H.l', 'DD.l.Return', 'UD.l.Return', 'H.Return']]
-    Y = populatedDataframe['subject']
+    X = populatedDataFrame
 
     # Podijeli prethodne skupove podataka na skupove za treniranje modela 
     # strojnog ucenja i skupove za testiranje modela strojnog ucenja
-    X_train, X_test, y_train, y_test = train_test_split(
-    X, Y, random_state=104,test_size=0.25, shuffle=True)
+    X_train = pd.DataFrame()
+    X_test = pd.DataFrame()
+    
+    trainBatchSize = 320
+    testBatchSize = 80
+    
+    for i in range(0, len(X), trainBatchSize + testBatchSize):
+        currentXBatch = X.iloc[i:i + trainBatchSize + testBatchSize]
+        trainXBatch = currentXBatch.iloc[:trainBatchSize]
+        testXBatch = currentXBatch.iloc[:trainBatchSize]
+        
+        X_train = X_train._append(trainXBatch, ignore_index = True)
+        X_test = X_test._append(testXBatch, ignore_index = True)
 
+    
+    Y_train = X_train['subject']
+    Y_test = X_test['subject']
+    
+    X_train = X_train.drop(columns=['subject'])
+    X_test = X_test.drop(columns=['subject'])
+    
     # Normaliziranje skupova podataka kako bi predvidanje modela 
     # bilo sto preciznije
     scaler = StandardScaler()
     scaler.fit(X_train)
     X_train = scaler.transform(X_train)
     X_test = scaler.transform(X_test)
-    return X_train, X_test, y_train, y_test
+    
+    return X_train, X_test, Y_train, Y_test
+
+# def splitDataFrame(populatedDataFrame: DataFrame):
+#     X_train = pd.DataFrame()
+#     X_test = pd.DataFrame()
+    
+#     trainBatchSize = 320
+#     testBatchSize = 80
+    
+#     for i in range(0, len(populatedDataFrame), trainBatchSize + testBatchSize):
+#         currentXBatch = populatedDataFrame.iloc[i:i + trainBatchSize + testBatchSize]
+#         trainXBatch = currentXBatch.iloc[:trainBatchSize]
+#         testXBatch = currentXBatch.iloc[trainBatchSize:trainBatchSize + testBatchSize]
+        
+#         X_train = X_train._append(trainXBatch, ignore_index = True)
+#         X_test = X_test._append(testXBatch, ignore_index = True)
+        
+#     return X_train, X_test
 
 def useModel(trainDF_Y, trainDF_X, y_test, testDF_X, model: RandomForestClassifier):
+    
+    # Treniranje modela strojnog ucenja
     model.fit(trainDF_X, trainDF_Y.values.ravel())
+    
+    # Testiranje modela strojnog ucenja
     prediction = model.predict(testDF_X)
+    
+    # Izrada konfuzijske matrice predvidanja kako bi mogli izracunati
+    # statisticke pokazatelje modela strojnog ucenja
     confusionMatrix = confusion_matrix(y_test, prediction)
+    
     return confusionMatrix, prediction
 
+
 def calculateStatisticalData(confusionMatrix: confusion_matrix, y_test, prediction):
+    
+    # Izracun statistickih pokazatelja modela strojnog ucenja
+    # iz dobivene konfuzijske matrice
     truePositive = np.diag(confusionMatrix)
     falsePositive = confusionMatrix.sum(axis=0) - np.diag(confusionMatrix)
     falseNegative = confusionMatrix.sum(axis=1) - np.diag(confusionMatrix)
@@ -56,6 +98,8 @@ def calculateStatisticalData(confusionMatrix: confusion_matrix, y_test, predicti
     accuracy = accuracy_score(y_test, prediction) * 100
     fMeassure = 2 * ((precision * recall) / (precision + recall))
     
+    # Spremanje dobivenih statistickih podataka u rijecnik za
+    # jednostavnije koristenje kasnije
     statisticalData = dict()
     statisticalData['truePositive'] = truePositive
     statisticalData['falsePositive'] = falsePositive
@@ -67,16 +111,12 @@ def calculateStatisticalData(confusionMatrix: confusion_matrix, y_test, predicti
     statisticalData['trueNegativeRate'] = trueNegativeRate
     statisticalData['accuracy'] = accuracy
     statisticalData['fMeassure'] = fMeassure
+    
     return statisticalData
 
 def plotStatisticalData(statisticalData: dict, index):
-    # # Preciznost
-    # precisonValuesDF = pd.DataFrame(list(statisticalData.get("precision")), index = ['Vrijednosti pokazatelja'])
-    # precisonValuesDF.plot(kind = 'bar')
-    # plt.xticks(rotation=0)
-    # plt.title('Preciznost pojedinog modela')
-    # plt.legend(bbox_to_anchor=(1.02, 0.1), loc='upper left', borderaxespad=0)
-    # plt.savefig('precision.png',bbox_inches='tight')
+    
+    # Iscrtavanje odabranih pokazatelja modela strojnog ucenja
     # Opoziv
     recallValuesDF = pd.DataFrame(list(statisticalData.get("recall")), index = index)
     recallValuesDF.plot(kind = 'bar')
@@ -98,13 +138,6 @@ def plotStatisticalData(statisticalData: dict, index):
     plt.title('Stopa točnih klasifikacija normalnih zapisa po subjektima')
     plt.legend().remove()
     plt.savefig('tnr.png',bbox_inches='tight')
-    # # Točnost
-    # accuracyValuesDF = pd.DataFrame(statisticalData.get("accuracy"), index = ['Vrijednosti pokazatelja'])
-    # accuracyValuesDF.plot(kind = 'bar')
-    # plt.xticks(rotation=0)
-    # plt.title('Točnost modela')
-    # plt.legend(bbox_to_anchor=(1.02, 0.1), loc='upper left', borderaxespad=0)
-    # plt.savefig('accuracy.png',bbox_inches='tight')
     # F-mjera
     fMeassureValuesDF = pd.DataFrame(statisticalData.get("fMeassure"), index = index)
     fMeassureValuesDF.plot(kind = 'bar')
