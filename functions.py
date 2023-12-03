@@ -53,18 +53,29 @@ def prepareForModelUse(populatedDataframe: DataFrame, index):
     return X_train, X_test, y_train, y_test
 
 def useModel(trainDF_Y, trainDF_X, y_test, testDF_X, model: RandomForestClassifier):
+    
+    # Treniranje modela stojnog ucenja i mjerenje 
+    # vremena potrebnog za isto
     startTime = time.time()
     model.fit(trainDF_X, trainDF_Y.values.ravel())
     endTime = time.time()
     trainingTime = endTime - startTime
+    
+    # Testiranje modela strojnog ucenja i mjerenje
+    # vremena potrebnog za isto
     startTime = time.time()
     prediction = model.predict(testDF_X)
     endTime = time.time()
     testingTime = endTime - startTime
+    
+    # Izrada konfuzijske matrice klasifikacija modela. Sluzi nam za kasnije
+    # izracunavanje konkretnih pokazatelja performansi modela strojnog ucenja
     confusionMatrix = confusion_matrix(y_test, prediction)
     return confusionMatrix, prediction, trainingTime, testingTime
 
 def calculateStatisticalData(confusionMatrix: confusion_matrix, y_test, prediction):
+    
+    # Izracun pokazatelja performansi modela strojnog ucenja
     truePositive = np.diag(confusionMatrix)
     falsePositive = confusionMatrix.sum(axis=0) - np.diag(confusionMatrix)
     falseNegative = confusionMatrix.sum(axis=1) - np.diag(confusionMatrix)
@@ -90,6 +101,9 @@ def calculateStatisticalData(confusionMatrix: confusion_matrix, y_test, predicti
     return statisticalData
 
 def plotStatisticalData(statisticalData: dict, index):
+    
+    # Iscrtavanje slozenih pokazatelja kako bi mogli usporediti performanse 
+    # modela strojnog ucenja za pojedine subjekte iz skupa podataka
     # Opoziv
     recallValuesDF = pd.DataFrame(list(statisticalData.get("recall")), index = index)
     recallValuesDF.plot(kind = 'bar')
@@ -124,6 +138,8 @@ def plotStatisticalData(statisticalData: dict, index):
     return
 
 def saveToExcel(statisticalData: dict, trainingTime, testingTime, index):
+    
+    # Priprema statistickih podataka za ispis u Excel datoteku
     simpleStatisticsDataFrame = pd.DataFrame(index = ['Vrijeme treniranja', 'Vrijeme testiranja', 'Preciznost', 'Tocnost'])
     simpleStatisticsDataFrame["Jednostavni pokazatelji"] = [trainingTime, testingTime, statisticalData.get("accuracy"), statisticalData.get("precision")]
     classificationStatisticsDataFrame = pd.DataFrame(index = index)
@@ -136,6 +152,7 @@ def saveToExcel(statisticalData: dict, trainingTime, testingTime, index):
     classificationStatisticsDataFrame['Opoziv'] = statisticalData.get("recall")
     classificationStatisticsDataFrame['F-mjera'] = statisticalData.get("fMeassure")
     
+    # Kreiranje i ispis statistickih pokazatelja u Excel datoteku
     fileName = 'Statisticki podaci modela.xlsx'
     writer = pd.ExcelWriter(fileName, engine = 'xlsxwriter', engine_kwargs={'options':{'strings_to_formulas': False}})
     workbook = writer.book

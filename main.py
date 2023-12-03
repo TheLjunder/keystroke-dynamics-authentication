@@ -34,7 +34,8 @@ modelRF = RandomForestClassifier(n_estimators = 30)
 # Koristenje napravljene metode za rad nad modelom strojnog ucenja
 confusionMatrix, prediction, trainingTime, testingTime = useModel(y_train, X_train, y_test, X_test, modelRF)
 
-# 5. Izracun statistickih pokazatelja modela strojnog ucenja #
+# 5. Izracun statistickih pokazatelja modela strojnog ucenja
+#    i spremanje statistickih pokazatelja u Excel datoteku#
 
 # Metoda sluzi za izracun statisticki pokazatelja, odnosno
 # sluzi za izracun performansi modela strojnog ucenja
