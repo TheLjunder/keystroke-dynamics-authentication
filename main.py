@@ -1,15 +1,11 @@
 # 1. Inicijalizacija programa #
 
 # Uvoz potrebnih varijabli
-from colorama import Fore, Style
 from pathlib import Path
 import pandas as pd
-import time
-import numpy as np
-from sklearn.metrics import confusion_matrix, precision_score, accuracy_score
 from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
-from functions import prepareForModelUse, useModel, calculateStatisticalData, plotStatisticalData
+from functions import prepareForModelUse, useModel, calculateStatisticalData, plotStatisticalData, saveToExcel
 
 # 2. Dohvat i priprena skupa podataka #
 
@@ -18,18 +14,17 @@ currentPath = Path(__file__).parent.absolute()
 datasetFilePath = Path.joinpath(currentPath, "DSL-StrongPasswordData.csv")
 
 # Spremanje skupa podataka u "Dataframe"
-datasetDF = pd.read_csv(datasetFilePath)
+datasetDataFrame = pd.read_csv(datasetFilePath)
 
 # Spremanje liste subjekata za kasnije koristenje s 
 # statistickim podacima
-subjectsListDF = datasetDF['subject'].value_counts()
-index = subjectsListDF.index.tolist()
+index = datasetDataFrame['subject'].unique()
 
 # 3. Priprema skupa podataka #
 
 # Koristenje napravljene metode za pripremu skupa podataka 
 # za unos u model strojng ucenja
-X_train, X_test, y_train, y_test = prepareForModelUse(datasetDF)
+X_train, X_test, y_train, y_test = prepareForModelUse(datasetDataFrame, index = index)
 
 # 4. Unos skupa podataka u model strojnog ucenja #
 
@@ -37,12 +32,18 @@ X_train, X_test, y_train, y_test = prepareForModelUse(datasetDF)
 modelRF = RandomForestClassifier(n_estimators = 30)
 
 # Koristenje napravljene metode za rad nad modelom strojnog ucenja
-confusionMatrix, prediction = useModel(y_train, X_train, y_test, X_test, modelRF)
+confusionMatrix, prediction, trainingTime, testingTime = useModel(y_train, X_train, y_test, X_test, modelRF)
 
 # 5. Izracun statistickih pokazatelja modela strojnog ucenja #
 
-# TODO Opis metode za izracun statistike
+# Metoda sluzi za izracun statisticki pokazatelja, odnosno
+# sluzi za izracun performansi modela strojnog ucenja
 statisticalData = calculateStatisticalData(confusionMatrix, y_test, prediction)
 
-# TODO Opis metode za crtanje
+# Metoda kojom se iscrtavaju grafovi odabranih pokazatelja kako bi 
+# smo kasnije detaljno analizirali rad modela
 plotStatisticalData(statisticalData, index)
+
+# Metoda koja sluzi za perzistenciju podataka. Izracunate statisticke
+# pokazatelje spremamo u Excel datoteku
+saveToExcel(statisticalData, trainingTime, testingTime, index)

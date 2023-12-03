@@ -1,5 +1,4 @@
 import numpy as np
-from numpy import ravel
 import pandas as pd
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
@@ -7,8 +6,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix, precision_score, accuracy_score
 import matplotlib.pyplot as plt
+import time
 
-def prepareForModelUse(populatedDataframe: DataFrame):
+def prepareForModelUse(populatedDataframe: DataFrame, index):
     
     # Uklanjanje nepotrebnih svojstava skupa podataka
     populatedDataframe.drop('sessionIndex', axis = 1, inplace = True)
@@ -16,19 +16,33 @@ def prepareForModelUse(populatedDataframe: DataFrame):
 
     # Razdvajanje skupa podataka na 2 cjeline. Y oznacava skup podataka
     # koji sadrzi korisnike dok je X skup podataka kojega model strojnog
-    # ucenja treba razvrstati (prepoznati) prema skupu X
-    X = populatedDataframe[['H.period', 'DD.period.t', 
-    'UD.period.t', 'H.t', 'DD.t.i', 'UD.t.i', 'H.i', 'DD.i.e', 
-    'UD.i.e', 'H.e', 'DD.e.five', 'UD.e.five', 'H.five', 'DD.five.Shift.r', 
-    'UD.five.Shift.r', 'H.Shift.r', 'DD.Shift.r.o', 'UD.Shift.r.o', 'H.o',
-    'DD.o.a', 'UD.o.a', 'H.a', 'DD.a.n', 'UD.a.n', 'H.n', 'DD.n.l', 'UD.n.l',
-    'H.l', 'DD.l.Return', 'UD.l.Return', 'H.Return']]
+    # ucenja treba razvrstati (prepoznati) prema skupu Y
+    X = populatedDataframe.iloc[:, 1:]
     Y = populatedDataframe['subject']
+
+    # Priprema polja za skupove treniranja i testiranja. Pocetna inicijalizacija
+    # je potrebna zbog zadrzavanja originalnog poredka subjekata
+    X_train, X_test, y_train, y_test = [], [], [], []
 
     # Podijeli prethodne skupove podataka na skupove za treniranje modela 
     # strojnog ucenja i skupove za testiranje modela strojnog ucenja
-    X_train, X_test, y_train, y_test = train_test_split(
-    X, Y, random_state=104,test_size=0.25, shuffle=True)
+    for subject in index:
+        subjectData = populatedDataframe[populatedDataframe['subject'] == subject]
+        trainData, testData = train_test_split(subjectData, test_size=0.2, random_state=42)
+        
+        X_train.append(trainData.iloc[:, 1:])
+        y_train.extend(trainData['subject'])
+        
+        X_test.append(testData.iloc[:, 1:])
+        y_test.extend(testData['subject'])
+
+    # Dodavanje podataka u liste
+    X_train = pd.concat(X_train, axis=0)
+    X_test = pd.concat(X_test, axis=0)
+
+    # Pretvorba popunjenih lista u 'DataFrame'
+    y_train = pd.Series(y_train)
+    y_test = pd.Series(y_test)
 
     # Normaliziranje skupova podataka kako bi predvidanje modela 
     # bilo sto preciznije
@@ -39,10 +53,16 @@ def prepareForModelUse(populatedDataframe: DataFrame):
     return X_train, X_test, y_train, y_test
 
 def useModel(trainDF_Y, trainDF_X, y_test, testDF_X, model: RandomForestClassifier):
+    startTime = time.time()
     model.fit(trainDF_X, trainDF_Y.values.ravel())
+    endTime = time.time()
+    trainingTime = endTime - startTime
+    startTime = time.time()
     prediction = model.predict(testDF_X)
+    endTime = time.time()
+    testingTime = endTime - startTime
     confusionMatrix = confusion_matrix(y_test, prediction)
-    return confusionMatrix, prediction
+    return confusionMatrix, prediction, trainingTime, testingTime
 
 def calculateStatisticalData(confusionMatrix: confusion_matrix, y_test, prediction):
     truePositive = np.diag(confusionMatrix)
@@ -70,13 +90,6 @@ def calculateStatisticalData(confusionMatrix: confusion_matrix, y_test, predicti
     return statisticalData
 
 def plotStatisticalData(statisticalData: dict, index):
-    # # Preciznost
-    # precisonValuesDF = pd.DataFrame(list(statisticalData.get("precision")), index = ['Vrijednosti pokazatelja'])
-    # precisonValuesDF.plot(kind = 'bar')
-    # plt.xticks(rotation=0)
-    # plt.title('Preciznost pojedinog modela')
-    # plt.legend(bbox_to_anchor=(1.02, 0.1), loc='upper left', borderaxespad=0)
-    # plt.savefig('precision.png',bbox_inches='tight')
     # Opoziv
     recallValuesDF = pd.DataFrame(list(statisticalData.get("recall")), index = index)
     recallValuesDF.plot(kind = 'bar')
@@ -84,6 +97,7 @@ def plotStatisticalData(statisticalData: dict, index):
     plt.title('Opoziv po kategorijama')
     plt.legend().remove()
     plt.savefig('recall.png',bbox_inches='tight')
+    
     # FPR
     falsePositiveValuesDF = pd.DataFrame(statisticalData.get("falsePositiveRate"), index = index)
     falsePositiveValuesDF.plot(kind = 'bar')
@@ -91,6 +105,7 @@ def plotStatisticalData(statisticalData: dict, index):
     plt.title('Stopa pogrešnih klasifikacija po subjektima')
     plt.legend().remove()
     plt.savefig('fpr.png',bbox_inches='tight')
+    
     # TNR
     trueNegativeValuesDF = pd.DataFrame(statisticalData.get("trueNegativeRate"), index = index)
     trueNegativeValuesDF.plot(kind = 'bar')
@@ -98,13 +113,7 @@ def plotStatisticalData(statisticalData: dict, index):
     plt.title('Stopa točnih klasifikacija normalnih zapisa po subjektima')
     plt.legend().remove()
     plt.savefig('tnr.png',bbox_inches='tight')
-    # # Točnost
-    # accuracyValuesDF = pd.DataFrame(statisticalData.get("accuracy"), index = ['Vrijednosti pokazatelja'])
-    # accuracyValuesDF.plot(kind = 'bar')
-    # plt.xticks(rotation=0)
-    # plt.title('Točnost modela')
-    # plt.legend(bbox_to_anchor=(1.02, 0.1), loc='upper left', borderaxespad=0)
-    # plt.savefig('accuracy.png',bbox_inches='tight')
+
     # F-mjera
     fMeassureValuesDF = pd.DataFrame(statisticalData.get("fMeassure"), index = index)
     fMeassureValuesDF.plot(kind = 'bar')
@@ -112,4 +121,31 @@ def plotStatisticalData(statisticalData: dict, index):
     plt.title('F-mjera modela po subjektima')
     plt.legend().remove()
     plt.savefig('fMeassure.png',bbox_inches='tight')
+    return
+
+def saveToExcel(statisticalData: dict, trainingTime, testingTime, index):
+    simpleStatisticsDataFrame = pd.DataFrame(index = ['Vrijeme treniranja', 'Vrijeme testiranja', 'Preciznost', 'Tocnost'])
+    simpleStatisticsDataFrame["Jednostavni pokazatelji"] = [trainingTime, testingTime, statisticalData.get("accuracy"), statisticalData.get("precision")]
+    classificationStatisticsDataFrame = pd.DataFrame(index = index)
+    classificationStatisticsDataFrame['TP'] = statisticalData.get("truePositive")
+    classificationStatisticsDataFrame['FP'] = statisticalData.get("falsePositive")
+    classificationStatisticsDataFrame['FN'] = statisticalData.get("falseNegative")
+    classificationStatisticsDataFrame['TN'] = statisticalData.get("trueNegative")
+    classificationStatisticsDataFrame['FPR'] = statisticalData.get("falsePositiveRate")
+    classificationStatisticsDataFrame['TNR'] = statisticalData.get("trueNegativeRate")
+    classificationStatisticsDataFrame['Opoziv'] = statisticalData.get("recall")
+    classificationStatisticsDataFrame['F-mjera'] = statisticalData.get("fMeassure")
+    
+    fileName = 'Statisticki podaci modela.xlsx'
+    writer = pd.ExcelWriter(fileName, engine = 'xlsxwriter', engine_kwargs={'options':{'strings_to_formulas': False}})
+    workbook = writer.book
+    worksheet = workbook.add_worksheet("Statistika")
+    worksheet.set_column(0, 0, 20)
+    worksheet.set_column(1, 1, 18)
+    worksheet.set_column(3, 7, 10)
+    worksheet.set_column(8, 11, 12)
+    writer.sheets["Statistika"] = worksheet
+    simpleStatisticsDataFrame.to_excel(writer, sheet_name = "Statistika", startrow = 0, startcol = 0)
+    classificationStatisticsDataFrame.to_excel(writer, sheet_name = "Statistika", startrow = 0, startcol = 3)
+    writer.close()
     return
