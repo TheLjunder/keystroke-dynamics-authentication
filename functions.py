@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix, precision_score, accuracy_score
 import matplotlib.pyplot as plt
@@ -46,7 +46,7 @@ def prepareForModelUse(populatedDataframe: DataFrame, index):
 
     # Normaliziranje skupova podataka kako bi predvidanje modela 
     # bilo sto preciznije
-    scaler = StandardScaler()
+    scaler = MinMaxScaler()
     scaler.fit(X_train)
     X_train = scaler.transform(X_train)
     X_test = scaler.transform(X_test)
