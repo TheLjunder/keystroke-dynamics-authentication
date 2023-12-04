@@ -113,7 +113,7 @@ def plotStatisticalData(statisticalData: dict, index, confusionMatrix, model):
     plt.xticks(rotation=90)
     plt.title('Stopa pogrešnih klasifikacija po subjektima')
     plt.legend().remove()
-    plt.savefig('fpr.png')
+    plt.savefig('far.png')
 
     # FRR
     falseRejectionValuesDF = pd.DataFrame(statisticalData.get("falseRejectionRate"), index = index)
