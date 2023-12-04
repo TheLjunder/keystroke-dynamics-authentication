@@ -31,7 +31,7 @@ X_train, X_test, y_train, y_test = prepareForModelUse(datasetDataFrame, index)
 modelRF = RandomForestClassifier(n_estimators = 30)
 
 # Koristenje napravljene metode za rad nad modelom strojnog ucenja
-confusionMatrices, prediction, trainingTime, testingTime = useModel(y_train, X_train, y_test, X_test, modelRF)
+confusionMatrix, prediction, trainingTime, testingTime = useModel(y_train, X_train, y_test, X_test, modelRF)
 
 # 5. Izračun statističkih pokazatelja modela strojnog učenja, 
 # iscrtavanje grafova pojedinih pokazatelja
@@ -39,11 +39,11 @@ confusionMatrices, prediction, trainingTime, testingTime = useModel(y_train, X_t
 
 # Metoda sluzi za izracun statisticki pokazatelja, odnosno
 # sluzi za izracun performansi modela strojnog ucenja
-statisticalData = calculateStatisticalData(confusionMatrices, y_test, prediction)
+statisticalData = calculateStatisticalData(confusionMatrix, y_test, prediction)
 
 # Metoda kojom se iscrtavaju grafovi odabranih pokazatelja kako bi 
 # smo kasnije detaljno analizirali rad modela
-plotStatisticalData(statisticalData, index, confusionMatrices, modelRF)
+plotStatisticalData(statisticalData, index, confusionMatrix, modelRF)
 
 # Metoda koja sluzi za perzistenciju podataka. Izracunate statisticke
 # pokazatelje spremamo u Excel datoteku

@@ -70,74 +70,85 @@ def useModel(trainDF_Y, trainDF_X, y_test, testDF_X, model: RandomForestClassifi
     
     # Izrada konfuzijske matrice klasifikacija modela. Sluzi nam za kasnije
     # izracunavanje konkretnih pokazatelja performansi modela strojnog ucenja
-    confusionMatrices = confusion_matrix(y_test, prediction, labels = model.classes_)
-    return confusionMatrices, prediction, trainingTime, testingTime
+    confusionMatrix = confusion_matrix(y_test, prediction, labels = model.classes_)
+    return confusionMatrix, prediction, trainingTime, testingTime
 
-def calculateStatisticalData(confusionMatrices, y_test, prediction):
+def calculateStatisticalData(confusionMatrix, y_test, prediction):
     
     # Izracun pokazatelja performansi modela strojnog ucenja
-    truePositive = np.diag(confusionMatrices)
-    falsePositive = confusionMatrices.sum(axis=0) - np.diag(confusionMatrices)
-    falseNegative = confusionMatrices.sum(axis=1) - np.diag(confusionMatrices)
-    trueNegative = confusionMatrices.sum() - (falsePositive + falseNegative + truePositive)
-    precision = precision_score(y_test, prediction, average = 'weighted') * 100
+    truePositive = np.diag(confusionMatrix)
+    falsePositive = confusionMatrix.sum(axis=0) - np.diag(confusionMatrix)
+    falseNegative = confusionMatrix.sum(axis=1) - np.diag(confusionMatrix)
+    trueNegative = confusionMatrix.sum() - (falsePositive + falseNegative + truePositive)
+    falseAcceptanceRate = falsePositive / (falsePositive + trueNegative) * 100
+    falseRejectionRate = falsePositive / (truePositive + falseNegative) * 100
     recall = truePositive / (truePositive + falseNegative) * 100
-    falsePositiveRate = falsePositive / (falsePositive + trueNegative) * 100
-    trueNegativeRate = trueNegative / (trueNegative + falsePositive) * 100
-    accuracy = accuracy_score(y_test, prediction) * 100
+    precision = precision_score(y_test, prediction, average = 'weighted') * 100
+    specificity = trueNegative / (trueNegative + falsePositive) * 100
     fMeassure = 2 * ((precision * recall) / (precision + recall))
+    accuracy = accuracy_score(y_test, prediction) * 100
     
     statisticalData = dict()
     statisticalData['truePositive'] = truePositive
     statisticalData['falsePositive'] = falsePositive
     statisticalData['falseNegative'] = falseNegative
     statisticalData['trueNegative'] = trueNegative
-    statisticalData['precision'] = precision
+    statisticalData['falseAcceptanceRate'] = falseAcceptanceRate
+    statisticalData['falseRejectionRate'] = falseRejectionRate
     statisticalData['recall'] = recall
-    statisticalData['falsePositiveRate'] = falsePositiveRate
-    statisticalData['trueNegativeRate'] = trueNegativeRate
-    statisticalData['accuracy'] = accuracy
+    statisticalData['precision'] = precision
+    statisticalData['specificity'] = specificity
     statisticalData['fMeassure'] = fMeassure
+    statisticalData['accuracy'] = accuracy
+    
     return statisticalData
 
-def plotStatisticalData(statisticalData: dict, index, confusionMatrices, model):
+def plotStatisticalData(statisticalData: dict, index, confusionMatrix, model):
     
     # Iscrtavanje slozenih pokazatelja kako bi mogli usporediti performanse 
     # modela strojnog ucenja za pojedine subjekte iz skupa podataka
-    # Opoziv
-    recallValuesDF = pd.DataFrame(list(statisticalData.get("recall")), index = index)
-    recallValuesDF.plot(kind = 'bar')
-    plt.xticks(rotation=90)
-    plt.title('Opoziv po kategorijama')
-    plt.legend().remove()
-    plt.savefig('recall.png')
-    
-    # FPR
-    falsePositiveValuesDF = pd.DataFrame(statisticalData.get("falsePositiveRate"), index = index)
-    falsePositiveValuesDF.plot(kind = 'bar')
+    # FAR
+    falseAcceptanceValuesDF = pd.DataFrame(statisticalData.get("falseAcceptanceRate"), index = index)
+    falseAcceptanceValuesDF.plot(kind = 'bar')
     plt.xticks(rotation=90)
     plt.title('Stopa pogrešnih klasifikacija po subjektima')
     plt.legend().remove()
     plt.savefig('fpr.png')
-    
-    # TNR
-    trueNegativeValuesDF = pd.DataFrame(statisticalData.get("trueNegativeRate"), index = index)
-    trueNegativeValuesDF.plot(kind = 'bar')
-    plt.xticks(rotation=90)
-    plt.title('Stopa točnih klasifikacija normalnih zapisa po subjektima')
-    plt.legend().remove()
-    plt.savefig('tnr.png')
 
-    # F-mjera
+    # FRR
+    falseRejectionValuesDF = pd.DataFrame(statisticalData.get("falseRejectionRate"), index = index)
+    falseRejectionValuesDF.plot(kind = 'bar')
+    plt.xticks(rotation=90)
+    plt.title('Stopa pogrešnog odbijanja')
+    plt.legend().remove()
+    plt.savefig('frr.png')
+
+    # Opoziv
+    recallValuesDF = pd.DataFrame(list(statisticalData.get("recall")), index = index)
+    recallValuesDF.plot(kind = 'bar')
+    plt.xticks(rotation=90)
+    plt.title('Opoziv po subjektima')
+    plt.legend().remove()
+    plt.savefig('recall.png')
+
+    # Specificity
+    specificityValuesDF = pd.DataFrame(statisticalData.get("specificity"), index = index)
+    specificityValuesDF.plot(kind = 'bar')
+    plt.xticks(rotation=90)
+    plt.title('Specifičnost po subjektima')
+    plt.legend().remove()
+    plt.savefig('specificity.png')
+
+    # F-Mjera
     fMeassureValuesDF = pd.DataFrame(statisticalData.get("fMeassure"), index = index)
     fMeassureValuesDF.plot(kind = 'bar')
     plt.xticks(rotation=90)
-    plt.title('F-mjera modela po subjektima')
+    plt.title('F-Mjera po subjektima')
     plt.legend().remove()
-    plt.savefig('fMeassure.png')
+    plt.savefig('fMjera.png')
 
     # Konfuzijska matrica
-    disp = ConfusionMatrixDisplay(confusionMatrices, display_labels = model.classes_)
+    disp = ConfusionMatrixDisplay(confusionMatrix, display_labels = model.classes_)
     fig, ax = plt.subplots(figsize = (20,20))
     disp.plot(ax = ax)
     plt.title('Konfuzijska matrica klasifikacija')
@@ -157,10 +168,11 @@ def saveToExcel(statisticalData: dict, trainingTime, testingTime, index):
     classificationStatisticsDataFrame['False Positive'] = statisticalData.get("falsePositive")
     classificationStatisticsDataFrame['False Negative'] = statisticalData.get("falseNegative")
     classificationStatisticsDataFrame['True Negative'] = statisticalData.get("trueNegative")
-    classificationStatisticsDataFrame['False Positive Rate'] = statisticalData.get("falsePositiveRate")
-    classificationStatisticsDataFrame['True Negative Rate'] = statisticalData.get("trueNegativeRate")
+    classificationStatisticsDataFrame['False Acceptance Rate'] = statisticalData.get("falseAcceptanceRate")
+    classificationStatisticsDataFrame['False Rejection Rate'] = statisticalData.get("falseRejectionRate")
     classificationStatisticsDataFrame['Opoziv'] = statisticalData.get("recall")
-    classificationStatisticsDataFrame['F-mjera'] = statisticalData.get("fMeassure")
+    classificationStatisticsDataFrame['Specifičnost'] = statisticalData.get("specificity")
+    classificationStatisticsDataFrame['F-Mjera'] = statisticalData.get("fMeassure")
     
     # Kreiranje i ispis statistickih pokazatelja u Excel datoteku
     fileName = 'Statisticki podaci modela.xlsx'
