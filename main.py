@@ -4,7 +4,6 @@
 from pathlib import Path
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-import matplotlib.pyplot as plt
 from functions import prepareForModelUse, useModel, calculateStatisticalData, plotStatisticalData, saveToExcel
 
 # 2. Dohvat i priprena skupa podataka #
@@ -24,7 +23,7 @@ index = datasetDataFrame['subject'].unique()
 
 # Koristenje napravljene metode za pripremu skupa podataka 
 # za unos u model strojng ucenja
-X_train, X_test, y_train, y_test = prepareForModelUse(datasetDataFrame, index = index)
+X_train, X_test, y_train, y_test = prepareForModelUse(datasetDataFrame, index)
 
 # 4. Unos skupa podataka u model strojnog ucenja #
 
@@ -32,7 +31,7 @@ X_train, X_test, y_train, y_test = prepareForModelUse(datasetDataFrame, index = 
 modelRF = RandomForestClassifier(n_estimators = 30)
 
 # Koristenje napravljene metode za rad nad modelom strojnog ucenja
-confusionMatrix, prediction, trainingTime, testingTime = useModel(y_train, X_train, y_test, X_test, modelRF)
+confusionMatrices, prediction, trainingTime, testingTime = useModel(y_train, X_train, y_test, X_test, modelRF)
 
 # 5. Izračun statističkih pokazatelja modela strojnog učenja, 
 # iscrtavanje grafova pojedinih pokazatelja
@@ -40,11 +39,11 @@ confusionMatrix, prediction, trainingTime, testingTime = useModel(y_train, X_tra
 
 # Metoda sluzi za izracun statisticki pokazatelja, odnosno
 # sluzi za izracun performansi modela strojnog ucenja
-statisticalData = calculateStatisticalData(confusionMatrix, y_test, prediction)
+statisticalData = calculateStatisticalData(confusionMatrices, y_test, prediction)
 
 # Metoda kojom se iscrtavaju grafovi odabranih pokazatelja kako bi 
 # smo kasnije detaljno analizirali rad modela
-plotStatisticalData(statisticalData, index)
+plotStatisticalData(statisticalData, index, confusionMatrices, modelRF)
 
 # Metoda koja sluzi za perzistenciju podataka. Izracunate statisticke
 # pokazatelje spremamo u Excel datoteku
