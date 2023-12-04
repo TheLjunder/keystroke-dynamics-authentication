@@ -113,7 +113,7 @@ def plotStatisticalData(statisticalData: dict, index, confusionMatrix, model):
     plt.xticks(rotation=90)
     plt.title('Stopa pogrešnih klasifikacija po subjektima')
     plt.legend().remove()
-    plt.savefig('far.png')
+    plt.savefig('stopaPogresnogPrihvacanja.png')
 
     # FRR
     falseRejectionValuesDF = pd.DataFrame(statisticalData.get("falseRejectionRate"), index = index)
@@ -121,7 +121,7 @@ def plotStatisticalData(statisticalData: dict, index, confusionMatrix, model):
     plt.xticks(rotation=90)
     plt.title('Stopa pogrešnog odbijanja')
     plt.legend().remove()
-    plt.savefig('frr.png')
+    plt.savefig('stopaPogresnogOdbijanja.png')
 
     # Opoziv
     recallValuesDF = pd.DataFrame(list(statisticalData.get("recall")), index = index)
@@ -129,7 +129,7 @@ def plotStatisticalData(statisticalData: dict, index, confusionMatrix, model):
     plt.xticks(rotation=90)
     plt.title('Opoziv po subjektima')
     plt.legend().remove()
-    plt.savefig('recall.png')
+    plt.savefig('opoziv.png')
 
     # Specificity
     specificityValuesDF = pd.DataFrame(statisticalData.get("specificity"), index = index)
@@ -137,7 +137,7 @@ def plotStatisticalData(statisticalData: dict, index, confusionMatrix, model):
     plt.xticks(rotation=90)
     plt.title('Specifičnost po subjektima')
     plt.legend().remove()
-    plt.savefig('specificity.png')
+    plt.savefig('specificnost.png')
 
     # F-Mjera
     fMeassureValuesDF = pd.DataFrame(statisticalData.get("fMeassure"), index = index)
@@ -162,14 +162,14 @@ def saveToExcel(statisticalData: dict, trainingTime, testingTime, index):
     
     # Priprema statistickih podataka za ispis u Excel datoteku
     simpleStatisticsDataFrame = pd.DataFrame(index = ['Vrijeme treniranja', 'Vrijeme testiranja', 'Preciznost', 'Tocnost'])
-    simpleStatisticsDataFrame["Jednostavni pokazatelji"] = [trainingTime, testingTime, statisticalData.get("accuracy"), statisticalData.get("precision")]
+    simpleStatisticsDataFrame["Iznos"] = [trainingTime, testingTime, statisticalData.get("accuracy"), statisticalData.get("precision")]
     classificationStatisticsDataFrame = pd.DataFrame(index = index)
     classificationStatisticsDataFrame['True Positive'] = statisticalData.get("truePositive")
     classificationStatisticsDataFrame['False Positive'] = statisticalData.get("falsePositive")
     classificationStatisticsDataFrame['False Negative'] = statisticalData.get("falseNegative")
     classificationStatisticsDataFrame['True Negative'] = statisticalData.get("trueNegative")
-    classificationStatisticsDataFrame['False Acceptance Rate'] = statisticalData.get("falseAcceptanceRate")
-    classificationStatisticsDataFrame['False Rejection Rate'] = statisticalData.get("falseRejectionRate")
+    classificationStatisticsDataFrame['Stopa pogrešnog prihvaćanja'] = statisticalData.get("falseAcceptanceRate")
+    classificationStatisticsDataFrame['Stopa pogrešnog  odbijanja'] = statisticalData.get("falseRejectionRate")
     classificationStatisticsDataFrame['Opoziv'] = statisticalData.get("recall")
     classificationStatisticsDataFrame['Specifičnost'] = statisticalData.get("specificity")
     classificationStatisticsDataFrame['F-Mjera'] = statisticalData.get("fMeassure")
